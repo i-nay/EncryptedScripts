@@ -1,0 +1,58 @@
+name: Delete all history
+on: 
+  schedule:
+    - cron: '1 0 1 * *'
+    - cron: '11 0 11 * *'
+    - cron: '12 0 21 * *'
+  workflow_dispatch:
+env:
+  TZ: Asia/Shanghai
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: run Delete
+      run: |
+        echo "It's a brand new start" > time.log
+        rm -rf .git/
+        git config --global init.defaultBranch main
+        git init
+        git remote add origin git@github.com:i-nay/EncryptedScripts.git
+    - name: Import GPG key
+      uses: crazy-max/ghaction-import-gpg@v5
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.PASSPHRASE }}
+        git_user_signingkey: true
+        git_commit_gpgsign: true
+    - name: Sign commit and push changes
+      env:
+        GIT_NAME: ${{ secrets.GIT_NAME }}
+        GIT_EMAIL: ${{ secrets.GIT_EMAIL }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        git config --global user.name $GIT_NAME
+        git config --global user.email $GIT_EMAIL
+        git add .
+        git commit -S -m "🎉 New start"
+        mkdir -p ~/.ssh/
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa 
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan github.com >> ~/.ssh/known_hosts        
+        git push -u --force origin main
+    - name: Do notification as bot
+      uses: nhomble/groupme-notify-action@v1.2
+      id: bot
+      with:
+        bot: ${{ secrets.GM_BOT_ID }}
+        message: "Hi coolapk,🎉 New start!"
+        token: ${{ secrets.GM_API_KEY }}
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 0
+        keep_minimum_runs: 1

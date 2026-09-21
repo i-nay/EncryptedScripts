@@ -1,0 +1,60 @@
+name: Run Api.Token
+on:
+  schedule:
+    - cron: '18 18 * * 3,6'
+  workflow_dispatch:
+env:
+  TZ: Asia/Shanghai
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          persist-credentials: true
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          pip install requests
+          pip install PyNaCl
+      - name: update secrets
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          LARGE_SECRET_PASSPHRASE: ${{ secrets.LARGE_SECRET_PASSPHRASE }}
+          APP_NUM: ${{ secrets.APP_NUM }}
+          MS_TOKEN_1: ${{ secrets.MS_TOKEN }}
+          CLIENT_ID_1: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET_1: ${{ secrets.CLIENT_SECRET }}
+          MS_TOKEN_2: ${{ secrets.MS_TOKEN_2 }}
+          CLIENT_ID_2: ${{ secrets.CLIENT_ID_2 }}
+          CLIENT_SECRET_2: ${{ secrets.CLIENT_SECRET_2 }}
+          MS_TOKEN_3: ${{ secrets.MS_TOKEN_3 }}
+          CLIENT_ID_3: ${{ secrets.CLIENT_ID_3 }}
+          CLIENT_SECRET_3: ${{ secrets.CLIENT_SECRET_3 }}
+          MS_TOKEN_4: ${{ secrets.MS_TOKEN_4 }}
+          CLIENT_ID_4: ${{ secrets.CLIENT_ID_4 }}
+          CLIENT_SECRET_4: ${{ secrets.CLIENT_SECRET_4 }}
+          MS_TOKEN_5: ${{ secrets.MS_TOKEN_5 }}
+          CLIENT_ID_5: ${{ secrets.CLIENT_ID_5 }}
+          CLIENT_SECRET_5: ${{ secrets.CLIENT_SECRET_5 }}
+        run: |
+          echo "[Api.Token] `date +"%Y-%m-%d %H:%M:%S"` begin" >> time.log
+          ./run.sh --api 3
+      - name: Commit
+        run: |
+          git config --global user.name "GitHub Actions[Bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add time.log
+          git commit -m "🤖 Github action update at `date '+%Y-%m-%d %H:%M:%S'`."
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          force: true
+          ssh: true
+          branch: main
